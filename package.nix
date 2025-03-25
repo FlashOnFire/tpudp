@@ -37,20 +37,28 @@
     gradleBuildTask = "buildAllJars";
 
     installPhase = ''
-        mkdir -p $out/{bin,share/suuuuuuuuuudoku}
-        ls build/libs
-        cp build/libs/port-scanner-1.0.jar $out/share/suuuuuuuuuudoku
-        cp build/libs/udp-client-1.0.jar $out/share/suuuuuuuuuudoku
-        cp build/libs/udp-server-1.0.jar $out/share/suuuuuuuuuudoku
+        mkdir -p $out/{bin,share/tpudp}
+        cp build/libs/port-scanner-1.0.jar $out/share/tpudp
+        cp build/libs/udp-client-1.0.jar $out/share/tpudp
+        cp build/libs/udp-server-1.0.jar $out/share/tpudp
+        cp build/libs/chat-udp-server-1.0.jar $out/share/tpudp
+        cp build/libs/chat-udp-client-1.0.jar $out/share/tpudp
+
 
         makeWrapper ${jdk}/bin/java $out/bin/server \
-            --add-flags "-jar $out/share/suuuuuuuuuudoku/udp-server-1.0.jar"
+            --add-flags "-jar $out/share/tpudp/udp-server-1.0.jar"
 
         makeWrapper ${jdk}/bin/java $out/bin/client \
-            --add-flags "-jar $out/share/suuuuuuuuuudoku/udp-client-1.0.jar"
+            --add-flags "-jar $out/share/tpudp/udp-client-1.0.jar"
 
         makeWrapper ${jdk}/bin/java $out/bin/port-scanner \
-            --add-flags "-jar $out/share/suuuuuuuuuudoku/port-scanner-1.0.jar"
+            --add-flags "-jar $out/share/tpudp/port-scanner-1.0.jar"
+
+        makeWrapper ${jdk}/bin/java $out/bin/chat-server \
+            --add-flags "-jar $out/share/tpudp/chat-udp-server-1.0.jar"
+
+        makeWrapper ${jdk}/bin/java $out/bin/chat-client \
+            --add-flags "-jar $out/share/tpudp/chat-udp-client-1.0.jar"
     '';
 
     meta.sourceProvenance = with lib.sourceTypes; [

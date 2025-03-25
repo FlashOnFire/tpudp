@@ -19,7 +19,7 @@ repositories {
 dependencies {}
 
 tasks.register("buildAllJars") {
-    dependsOn("jarPortScanner", "jarUDPClient", "jarUDPServer")
+    dependsOn("jarPortScanner", "jarUDPClient", "jarUDPServer", "jarChatUDPServer", "jarChatUDPClient")
 }
 
 tasks.register<JavaExec>("runPortScanner") {
@@ -34,6 +34,16 @@ tasks.register<JavaExec>("runUDPClient") {
 
 tasks.register<JavaExec>("runUDPServer") {
     mainClass.set("fr.polytech.UDPServer")
+    classpath = sourceSets.main.get().runtimeClasspath
+}
+
+tasks.register<JavaExec>("runChatUDPServer") {
+    mainClass.set("fr.polytech.ChatUDPServer")
+    classpath = sourceSets.main.get().runtimeClasspath
+}
+
+tasks.register<JavaExec>("runChatUDPClient") {
+    mainClass.set("fr.polytech.ChatUDPClient")
     classpath = sourceSets.main.get().runtimeClasspath
 }
 
@@ -53,10 +63,26 @@ tasks.register<Jar>("jarUDPClient") {
     from(sourceSets.main.get().output)
 }
 
+tasks.register<Jar>("jarChatUDPClient") {
+    archiveBaseName.set("chat-udp-client")
+    manifest {
+        attributes["Main-Class"] = "fr.polytech.ChatUDPClient"
+    }
+    from(sourceSets.main.get().output)
+}
+
 tasks.register<Jar>("jarUDPServer") {
     archiveBaseName.set("udp-server")
     manifest {
         attributes["Main-Class"] = "fr.polytech.UDPServer"
+    }
+    from(sourceSets.main.get().output)
+}
+
+tasks.register<Jar>("jarChatUDPServer") {
+    archiveBaseName.set("chat-udp-server")
+    manifest {
+        attributes["Main-Class"] = "fr.polytech.ChatUDPServer"
     }
     from(sourceSets.main.get().output)
 }
