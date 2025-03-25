@@ -7,7 +7,7 @@
 }: let
   jdk = jdk23;
   self = stdenv.mkDerivation (finalAttrs: {
-    pname = "tpudp_server";
+    pname = "tpudp";
     version = "0.0.0";
 
     src = lib.cleanSource ./.;
@@ -34,15 +34,23 @@
 
     doCheck = true;
 
-    # gradleBuildTask = "buildAllJars";
+    gradleBuildTask = "buildAllJars";
 
     installPhase = ''
         mkdir -p $out/{bin,share/suuuuuuuuuudoku}
         ls build/libs
-        cp build/libs/tpudp-1.0-SNAPSHOT.jar $out/share/suuuuuuuuuudoku
+        cp build/libs/port-scanner-1.0.jar $out/share/suuuuuuuuuudoku
+        cp build/libs/udp-client-1.0.jar $out/share/suuuuuuuuuudoku
+        cp build/libs/udp-server-1.0.jar $out/share/suuuuuuuuuudoku
 
         makeWrapper ${jdk}/bin/java $out/bin/tui \
-          --add-flags "-jar $out/share/suuuuuuuuuudoku/tpudp-1.0-SNAPSHOT.jar"
+          --add-flags "-jar $out/share/suuuuuuuuuudoku/udp-server-1.0.jar"
+
+        makeWrapper ${jdk}/bin/java $out/bin/swing \
+          --add-flags "-jar $out/share/suuuuuuuuuudoku/udp-client-1.0.jar"
+
+        makeWrapper ${jdk}/bin/java $out/bin/imGUI \
+          --add-flags "-jar $out/share/suuuuuuuuuudoku/port-scanner-1.0.jar"
     '';
 
     meta.sourceProvenance = with lib.sourceTypes; [

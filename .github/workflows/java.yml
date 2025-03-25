@@ -19,5 +19,4 @@ jobs:
 
       - name: Build derivations
         run: |
-          nix build -L .#tpudp_client
-          nix build -L .#tpudp_server
+          nix build -L .

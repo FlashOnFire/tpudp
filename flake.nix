@@ -24,12 +24,12 @@
         ...
       }: {
         packages = {
-          tpudp_client = pkgs.callPackage ./client.nix {};
-          tpudp_server = pkgs.callPackage ./server.nix {};
+          default = self'.packages.tpudp;
+          tpudp = pkgs.callPackage ./package.nix {};
         };
 
         devShells.default = pkgs.mkShell {
-          inputsFrom = with self'.packages; [tpudp_client tpudp_server];
+          inputsFrom = with self'.packages; [default];
 
           # LD_LIBRARY_PATH = lib.makeLibraryPath [];
         };
