@@ -1,14 +1,16 @@
 package fr.polytech;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.DatagramPacket;
-import java.util.ArrayList;
+import java.net.DatagramSocket;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 
 public class ChatUDPServer {
-    public static void main(String[] args) {
+    private static final HashMap<String, Session> sessions = new HashMap<>();
 
-        ArrayList<Session> sessions = new ArrayList<>();
+    public static void main(String[] args) {
 
         try (DatagramSocket socket = new DatagramSocket(1234)) {
             System.out.println("Server is running on port 1234");
@@ -17,18 +19,85 @@ public class ChatUDPServer {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-                String message = new String(packet.getData(), 0, packet.getLength());
-                System.out.println("Received new connection: " + message);
 
-                Session session = new Session();
-                sessions.add(session);
+                ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
+                if (byteBuffer.getInt() != PacketType.HELLO.getId()) {
+                    System.out.println("Received invalid packet type from new connection");
+                    continue;
+                }
+
+                int nameLength = byteBuffer.getInt();
+                String name = new String(byteBuffer.array(), byteBuffer.position(), nameLength);
+                if (sessions.containsKey(name)) {
+                    System.out.println("Rejecting connection using name " + name + " (already taken)");
+                    DatagramPacket reply = new DatagramPacket(
+                            ByteBuffer.allocate(4).putInt(PacketType.NAME_ALREADY_TAKEN.getId()).array(),
+                            4,
+                            packet.getAddress(),
+                            packet.getPort()
+                    );
+                    socket.send(reply);
+                    continue;
+                }
+                System.out.println("User " + name + " joined");
+
+                Session session = new Session(
+                        () -> sessions.remove(name),
+                        (String bcMsg) -> broadcast(name, bcMsg),
+                        (String target, String msg) -> sendPrivateMessage(name, target, msg),
+                        ChatUDPServer::forgeUserListPacket
+                );
+                sessions.put(name, session);
 
                 // send new port to client
-                DatagramPacket reply = new DatagramPacket(String.valueOf(session.getPort()).getBytes(), String.valueOf(session.getPort()).length(), packet.getAddress(), packet.getPort());
+                ByteBuffer portBuffer = ByteBuffer.allocate(8);
+                portBuffer.putInt(PacketType.PORT.getId());
+                portBuffer.putInt(session.getPort());
+                DatagramPacket reply = new DatagramPacket(
+                        portBuffer.array(),
+                        portBuffer.position(),
+                        packet.getAddress(),
+                        packet.getPort()
+                );
                 socket.send(reply);
             }
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    private static void broadcast(String username, String message) {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        buffer.putInt(PacketType.BROADCAST.getId());
+
+        byte[] byteMessage = message.getBytes(StandardCharsets.UTF_8);
+        buffer.putInt(byteMessage.length);
+        buffer.put(message.getBytes(StandardCharsets.UTF_8));
+
+        sessions.entrySet().stream()
+                .filter((entry) -> !entry.getKey().equals(username))
+                .forEach((entry) -> entry.getValue().send(buffer));
+    }
+
+    private static boolean sendPrivateMessage(String username, String target, String message) {
+        if (!sessions.containsKey(username)) {
+            return false;
+        }
+
+        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+        buffer.putInt(PacketType.PRIVATE.getId());
+        buffer.put(message.getBytes());
+
+        sessions.get(target).send(buffer);
+
+        return true;
+    }
+
+    private static ByteBuffer forgeUserListPacket() {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        buffer.putInt(PacketType.USER_LIST.getId());
+        buffer.put(String.join(",", sessions.keySet()).getBytes());
+
+        return buffer;
     }
 }
