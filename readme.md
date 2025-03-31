@@ -38,16 +38,91 @@ gradle runChatUDPClient
 ```
 
 Commands will be available in the client console.
-Type `help` to get a list of available commands.
+Type `/help` to get a list of available commands.
 ```bash
+/help
+===== COMMANDS =====
+/bc <message>      - Broadcast message to all users
+/msg <user> <msg>  - Send private message to a specific user
+/room <name>       - Join an existing room
+/createroom <name> - Create a new room
+/deleteroom <name> - Delete an existing room
+/users             - Display all online users
+/rooms             - Display all available rooms
+/help              - Show this help message
+/quit              - Exit the chat application
+===================
 ```
+
+> Note: all the command begin with a `/` and are case sensitive.
 
 ## Architecture
 
 ### Class Diagram
 
 ```mermaid
+classDiagram
+direction BT
+class ChatUDPClient {
+  + ChatUDPClient()
+  + main(String[]) void
+}
+class ChatUDPServer {
+  + ChatUDPServer()
+  - ArrayList~String~ rooms
+  - String baseRoom
+  - ConcurrentHashMap~String, Session~ sessions
+  - broadcast(String) void
+  - deleteRoom(String) boolean
+  - forgeRoomSwitchPacket(String) ByteBuffer
+  - switchRoom(String, String) void
+  - forgeRoomListPacket() ByteBuffer
+  - sendRoomMessage(String, String, String) void
+  + main(String[]) void
+  - forgeUserListPacket() ByteBuffer
+  - createRoom(String) boolean
+  - sendPrivateMessage(String, String, String) boolean
+}
+class PacketType {
+<<enumeration>>
+  - PacketType(int)
+  +  USER_LIST
+  +  ROOM_SWITCH
+  +  PRIVATE
+  +  CREATE_ROOM
+  +  ROOM_MESSAGE
+  +  HELLO
+  +  NAME_ALREADY_TAKEN
+  +  DELETE_ROOM
+  +  NEW_USER
+  +  ROOM_LIST
+  - int id
+  +  BROADCAST
+  +  JOIN_ROOM
+  +  HEARTBEAT
+  +  PORT
+  + getId() int
+  + fromId(int) PacketType
+  + values() PacketType[]
+  + valueOf(String) PacketType
+}
+class Session {
+  + Session(String, String, Runnable, Consumer~String~, BiPredicate~String, String~, Supplier~ByteBuffer~, Supplier~ByteBuffer~, Predicate~String~, Predicate~String~, BiConsumer~String, String~, Consumer~String~)
+  - DatagramSocket socket
+  - String currentRoom
+  - String name
+  - int destPort
+  - InetAddress address
+  - boolean firstHeartbeat
+  + getCurrentRoom() String
+  + setCurrentRoom(String) void
+  + send(ByteBuffer) void
+  + getPort() int
+  + getName() String
+}
 
+ChatUDPServer "1" *--> "sessions *" Session
+ChatUDPServer  ..>  Session : «create»
 ```
 
 We are using one Client and one Server class.
@@ -67,21 +142,39 @@ sequenceDiagram
   participant Socket2 as Socket2
   participant Socket3 as Socket3
 
-  rect rgb(250,250,200)
-    note left of CentralServer: Clients register with the central server and receive a dedicated socket/port
+  rect rgb(230,240,255)
+     note left of CentralServer: Clients register with the central server and receive a dedicated socket/port
     Client1 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Alice")
     CentralServer -->> Client1: PORT (Socket1, port: 5678)
+
     Client2 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Bob")
     CentralServer -->> Client2: PORT (Socket2, port: 6789)
+
     Client3 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Charlie")
     CentralServer -->> Client3: PORT (Socket3, port: 7890)
   end
 
-  rect rgb(250,250,200)
+  rect rgb(255,235,205)
     note left of CentralServer: Clients send periodic heartbeat signals to keep the connection alive
     Client1 ->> Socket1: HEARTBEAT
+    opt First HeartBeat
+        Socket1 -->> Client1: USER_LIST
+        Socket1 -->> Client1: ROOM_LIST
+        Socket1 -->> Client1: ROOM_SWITCH ("General")
+    end
+
     Client2 ->> Socket2: HEARTBEAT
+        opt First HeartBeat
+    Socket2 -->> Client2: USER_LIST
+    Socket2 -->> Client2: ROOM_LIST
+    Socket2 -->> Client2: ROOM_SWITCH ("General")
+    end
     Client3 ->> Socket3: HEARTBEAT
+        opt First HeartBeat
+    Socket3 -->> Client3: USER_LIST
+    Socket3 -->> Client3: ROOM_LIST
+    Socket3 -->> Client3: ROOM_SWITCH ("General")
+    end
   end
 
   rect rgb(250,250,200)
@@ -91,9 +184,37 @@ sequenceDiagram
     Socket3 -->> Client3: BROADCAST ("Hello, everyone!")
   end
 
-  rect rgb(250,250,200)
-    note left of CentralServer: Client2 sends a private message to Client3
+  rect rgb(255,215,235)
+      note left of CentralServer: Client2 sends a private message to Client3
     Client2 ->> Socket2: PRIVATE (to "Charlie", "Hey, Charlie!")
     Socket3 -->> Client3: PRIVATE ("Hey, Charlie!")
+  end
+
+    rect rgb(220,255,220)
+    note left of CentralServer: Client1 creates a new room
+    Client1 ->> CentralServer: CREATE_ROOM ("Gaming Room")
+    CentralServer -->> Client1: ROOM_LIST (["Gaming Room"])
+    CentralServer -->> Client2: ROOM_LIST (["Gaming Room"])
+    CentralServer -->> Client3: ROOM_LIST (["Gaming Room"])
+  end
+
+  rect rgb(255,220,220)
+    note left of CentralServer: Client2 joins the "Gaming Room"
+    Client2 ->> CentralServer: JOIN_ROOM ("Gaming Room")
+    CentralServer -->> Client2: ROOM_SWITCH ("Gaming Room")
+  end
+
+    rect rgb(240,230,255)
+    note left of CentralServer: Client3 sends a message in the "Gaming Room"
+    Client3 ->> CentralServer: ROOM_MESSAGE ("Anyone up for a game?")
+    CentralServer -->> Client1: ROOM_MESSAGE ("Anyone up for a game?")
+    CentralServer -->> Client2: ROOM_MESSAGE ("Anyone up for a game?")
+  end
+
+  rect rgb(200,255,250)
+        note left of CentralServer: Client1 deletes the "Gaming Room"
+    Client1 ->> CentralServer: DELETE_ROOM ("Gaming Room")
+    CentralServer -->> Client2: ROOM_LIST ([])
+    CentralServer -->> Client3: ROOM_LIST ([])
   end
 ```
