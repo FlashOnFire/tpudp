@@ -1,23 +1,23 @@
 # TPUDP
 
-This project demonstrate the usage of udp sockets in java through a simple chat application.
+This project demonstrates the usage of UDP sockets in Java through a simple chat application.
 
 ## Functionalities
 
 - Create a server connection for each client on a dedicated port
 - Send and receive broadcast messages
 - Send and receive private messages
-- Create, Delete, join and leave chat rooms
+- Create, delete, join, and leave chat rooms
 - Send and receive messages in chat rooms
-- Disable user connection after a certain period of inactivity through a heartbeat mechanism
+- Disable user connections after a certain period of inactivity through a heartbeat mechanism
 
 ## Usage
 
 ### Requirements
 
-If you are using nix, you can simply `nix build` the project and get executables available in the `result/bin` folder.
+If you are using Nix, you can simply `nix build` the project and get executables available in the `result/bin` folder.
 
-Otherwise, you will just need java 23 and gradle installed on your machine.
+Otherwise, you will just need Java 23 and Gradle installed on your machine.
 
 ### Server
 
@@ -27,7 +27,7 @@ To start the server, run the following command:
 gradle runChatUDPServer
 ```
 
-> Note: all clients will try to connect to the server through localhost.
+> Note: All clients will try to connect to the server through localhost.
 
 ### Client
 
@@ -37,8 +37,8 @@ To start a client, run the following command:
 gradle runChatUDPClient
 ```
 
-You are now able to send message in your current room ("General") by just typing the message and pressing enter.
-Commands are also be available in the client console.
+You are now able to send messages in your current room ("General") by typing the message and pressing Enter.
+Commands are also available in the client console.
 Type `/help` to get a list of available commands.
 ```bash
 /help
@@ -55,7 +55,7 @@ Type `/help` to get a list of available commands.
 ===================
 ```
 
-> Note: all the command begin with a `/` and are case sensitive.
+> Note: All commands begin with a `/` and are case-sensitive.
 
 ## Architecture
 
@@ -127,9 +127,9 @@ ChatUDPServer  ..>  Session : «create»
 ```
 
 We are using one Client and one Server class.
-When the server receive a connection, it create a Session instance to handle the communication with the client.
+When the server receives a connection, it creates a Session instance to handle the communication with the client.
 We also have a PacketType enum to define the different types of packets that can be sent between the client and the server.
-All the packets are 1024 bytes with the first byte being the packet type.
+All the packets are 1024 bytes, with the first byte being the packet type.
 
 ### Sequence Diagram
 
