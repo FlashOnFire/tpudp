@@ -60,6 +60,12 @@ public class ChatUDPServer {
                         packet.getPort()
                 );
                 socket.send(reply);
+
+                // Notify other users
+                ByteBuffer userListBuffer = forgeUserListPacket();
+                sessions.values().forEach((s) -> {
+                    s.send(userListBuffer);
+                });
             }
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
@@ -84,9 +90,14 @@ public class ChatUDPServer {
             return false;
         }
 
-        ByteBuffer buffer = ByteBuffer.wrap(message.getBytes());
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.PRIVATE.getId());
-        buffer.put(message.getBytes());
+        byte[] byteUsername = username.getBytes(StandardCharsets.UTF_8);
+        buffer.putInt(byteUsername.length);
+        buffer.put(byteUsername);
+        byte[] byteMessage = message.getBytes(StandardCharsets.UTF_8);
+        buffer.putInt(byteMessage.length);
+        buffer.put(byteMessage);
 
         sessions.get(target).send(buffer);
 

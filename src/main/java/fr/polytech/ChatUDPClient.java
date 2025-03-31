@@ -114,7 +114,7 @@ public class ChatUDPClient {
                                 receiveByteBuffer.get(privateMessageBytes);
                                 String privateMessage = new String(privateMessageBytes);
 
-                                System.out.println("[" + recipient + "-> You]: " + privateMessage);
+                                System.out.println("[" + recipient + " -> You]: " + privateMessage);
                                 break;
                             case USER_LIST:
                                 String userListStr = new String(
@@ -170,35 +170,45 @@ public class ChatUDPClient {
                         System.out.println("list - Display all online users");
                         System.out.println("help - Show this help message");
                         System.out.println("===================");
-                        continue;
+                        break;
                     case "quit":
                         break label;
+                    default:
+                        byteBuffer = ByteBuffer.allocate(1024);
+                        if (input.equals("bc")) {
+                            byteBuffer.putInt(PacketType.BROADCAST.getId());
+                        } else {
+                            if (!userList.contains(input)) {
+                                System.out.println("User does not exist");
+                                break;
+                            }
+
+                            byteBuffer.putInt(PacketType.PRIVATE.getId());
+                            byte[] recipientBytes = input.getBytes(StandardCharsets.UTF_8);
+                            byteBuffer.putInt(recipientBytes.length);
+                            byteBuffer.put(recipientBytes);
+                        }
+
+                        System.out.println("Enter your message: ");
+                        do {
+                            input = scanner.nextLine();
+                        } while (input.isBlank() || input.length() > 1024);
+
+                        byte[] messageBytes = input.getBytes(StandardCharsets.UTF_8);
+                        byteBuffer.putInt(messageBytes.length);
+                        byteBuffer.put(messageBytes);
+
+                        packet = new DatagramPacket(
+                                byteBuffer.array(),
+                                byteBuffer.position(),
+                                InetAddress.getByName("localhost"),
+                                port
+                        );
+                        socket.send(packet);
+
+                        System.out.println("[You -> " + (input.equals("bc") ? "All" : input) + "]: " + input);
+                        break;
                 }
-
-                byteBuffer = ByteBuffer.allocate(1024);
-                if (input.equals("bc")) {
-                    byteBuffer.putInt(PacketType.BROADCAST.getId());
-                } else {
-                    byteBuffer.putInt(PacketType.PRIVATE.getId());
-                    byteBuffer.put(input.getBytes(StandardCharsets.UTF_8));
-                }
-
-                System.out.println("Enter your message: ");
-                do {
-                    input = scanner.nextLine();
-                } while (input.isBlank() || input.length() > 1024);
-
-                byte[] messageBytes = input.getBytes(StandardCharsets.UTF_8);
-                byteBuffer.putInt(messageBytes.length);
-                byteBuffer.put(messageBytes);
-
-                packet = new DatagramPacket(
-                        byteBuffer.array(),
-                        byteBuffer.position(),
-                        InetAddress.getByName("localhost"),
-                        port
-                );
-                socket.send(packet);
             }
         } catch (Exception e) {
             e.printStackTrace();

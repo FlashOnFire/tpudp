@@ -36,11 +36,13 @@ public class Session {
                     ByteBuffer bb = ByteBuffer.wrap(packet.getData());
                     int packetType = bb.getInt();
                     if (packetType == PacketType.HEARTBEAT.getId()) {
-                        if (firstHeartbeat) {
+                        if (!firstHeartbeat) {
                             address = packet.getAddress();
                             destPort = packet.getPort();
 
                             send(userListSupplier.get());
+
+                            firstHeartbeat = true;
                         }
                     } else if (packetType == PacketType.BROADCAST.getId()) {
                         int messageLength = bb.getInt();
