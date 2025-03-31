@@ -13,7 +13,7 @@ This project demonstrate the usage of udp sockets in java through a simple chat 
 
 ## Usage
 
-### requirements
+### Requirements
 
 If you are using nix, you can simply `nix build` the project and get executables available in the `result/bin` folder.
 
@@ -37,7 +37,8 @@ To start a client, run the following command:
 gradle runChatUDPClient
 ```
 
-Commands will be available in the client console.
+You are now able to send message in your current room ("General") by just typing the message and pressing enter.
+Commands are also be available in the client console.
 Type `/help` to get a list of available commands.
 ```bash
 /help
@@ -137,6 +138,7 @@ sequenceDiagram
   participant Client1 as Client1
   participant Client2 as Client2
   participant Client3 as Client3
+  participant Client4 as Client4
   participant CentralServer as CentralServer
   participant Socket1 as Socket1
   participant Socket2 as Socket2
@@ -152,6 +154,9 @@ sequenceDiagram
 
     Client3 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Charlie")
     CentralServer -->> Client3: PORT (Socket3, port: 7890)
+
+    Client4 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Alice")
+    CentralServer -->> Client4: NAME_ALREADY_TAKEN
   end
 
   rect rgb(255,235,205)
