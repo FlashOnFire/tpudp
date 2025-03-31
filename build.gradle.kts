@@ -25,26 +25,31 @@ tasks.register("buildAllJars") {
 tasks.register<JavaExec>("runPortScanner") {
     mainClass.set("fr.polytech.UDPPortScanner")
     classpath = sourceSets.main.get().runtimeClasspath
+    standardInput = System.`in`
 }
 
 tasks.register<JavaExec>("runUDPClient") {
     mainClass.set("fr.polytech.UDPClient")
     classpath = sourceSets.main.get().runtimeClasspath
+    standardInput = System.`in`
 }
 
 tasks.register<JavaExec>("runUDPServer") {
     mainClass.set("fr.polytech.UDPServer")
     classpath = sourceSets.main.get().runtimeClasspath
+    standardInput = System.`in`
 }
 
 tasks.register<JavaExec>("runChatUDPServer") {
     mainClass.set("fr.polytech.ChatUDPServer")
     classpath = sourceSets.main.get().runtimeClasspath
+    standardInput = System.`in`
 }
 
 tasks.register<JavaExec>("runChatUDPClient") {
     mainClass.set("fr.polytech.ChatUDPClient")
     classpath = sourceSets.main.get().runtimeClasspath
+    standardInput = System.`in`
 }
 
 tasks.register<Jar>("jarPortScanner") {
