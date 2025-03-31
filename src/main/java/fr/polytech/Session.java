@@ -5,9 +5,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 public class Session {
     private DatagramSocket socket;
@@ -17,7 +15,24 @@ public class Session {
 
     private boolean firstHeartbeat = false;
 
-    public Session(Runnable sessionTimeoutHook, Consumer<String> broadcastHook, BiPredicate<String, String> privateMessageHook, Supplier<ByteBuffer> userListSupplier) {
+    private String currentRoom;
+    private final String name;
+
+    public Session(
+            String name,
+            String firstRoom,
+            Runnable sessionTimeoutHook,
+            Consumer<String> broadcastHook,
+            BiPredicate<String, String> privateMessageHook,
+            Supplier<ByteBuffer> userListSupplier,
+            Supplier<ByteBuffer> roomListSupplier,
+            Predicate<String> roomCreationHook,
+            Predicate<String> roomDeletionHook,
+            BiConsumer<String, String> roomMessageHook,
+            Consumer<String> roomSwitchHook) {
+        this.name = name;
+        this.currentRoom = firstRoom;
+
         try {
             socket = new DatagramSocket();
             socket.setSoTimeout(10000);
@@ -41,6 +56,17 @@ public class Session {
                             destPort = packet.getPort();
 
                             send(userListSupplier.get());
+                            send(roomListSupplier.get());
+
+                            System.out.println("Received first heartbeat from " + address + ":" + destPort);
+
+                            ByteBuffer buf = ByteBuffer.allocate(1024);
+                            buf.putInt(PacketType.ROOM_SWITCH.getId());
+                            byte[] roomNameBytes = currentRoom.getBytes();
+                            buf.putInt(roomNameBytes.length);
+                            buf.put(roomNameBytes);
+
+                            send(buf);
 
                             firstHeartbeat = true;
                         }
@@ -66,6 +92,41 @@ public class Session {
                         } else {
                             System.out.println("Failed to send message to " + recipient);
                         }
+                    } else if (packetType == PacketType.CREATE_ROOM.getId()) {
+                        int roomNameLength = bb.getInt();
+                        byte[] roomNameBytes = new byte[roomNameLength];
+                        bb.get(roomNameBytes);
+                        String roomName = new String(roomNameBytes);
+
+                        if (roomCreationHook.test(roomName)) {
+                            System.out.println("Room " + roomName + " created");
+                        } else {
+                            System.out.println("Failed to create room " + roomName);
+                        }
+                    } else if (packetType == PacketType.DELETE_ROOM.getId()) {
+                        int roomNameLength = bb.getInt();
+                        byte[] roomNameBytes = new byte[roomNameLength];
+                        bb.get(roomNameBytes);
+                        String roomName = new String(roomNameBytes);
+
+                        if (roomDeletionHook.test(roomName)) {
+                            System.out.println("Room " + roomName + " deleted");
+                        } else {
+                            System.out.println("Failed to delete room " + roomName);
+                        }
+                    } else if (packetType == PacketType.ROOM_MESSAGE.getId()) {
+                        int messageLength = bb.getInt();
+                        byte[] messageBytes = new byte[messageLength];
+                        bb.get(messageBytes);
+                        String message = new String(messageBytes);
+                        roomMessageHook.accept(currentRoom, message);
+                    } else if (packetType == PacketType.ROOM_SWITCH.getId()) {
+                        int roomNameLength = bb.getInt();
+                        byte[] roomNameBytes = new byte[roomNameLength];
+
+                        bb.get(roomNameBytes);
+                        String roomName = new String(roomNameBytes);
+                        roomSwitchHook.accept(roomName);
                     } else {
                         System.out.println("Received invalid packet type");
                     }
@@ -96,12 +157,26 @@ public class Session {
 
         try {
             DatagramPacket packet = new DatagramPacket(
-                    buffer.array(), buffer.position(), address,
+                    buffer.array(),
+                    buffer.position(),
+                    address,
                     destPort
             );
             socket.send(packet);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getCurrentRoom() {
+        return currentRoom;
+    }
+
+    public void setCurrentRoom(String room) {
+        currentRoom = room;
     }
 }
