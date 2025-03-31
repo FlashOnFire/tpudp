@@ -1,3 +1,62 @@
+# TPUDP
+
+This project demonstrate the usage of udp sockets in java through a simple chat application.
+
+## Functionalities
+
+- Create a server connection for each client on a dedicated port
+- Send and receive broadcast messages
+- Send and receive private messages
+- Create, Delete, join and leave chat rooms
+- Send and receive messages in chat rooms
+- Disable user connection after a certain period of inactivity through a heartbeat mechanism
+
+## Usage
+
+### requirements
+
+If you are using nix, you can simply `nix build` the project and get executables available in the `result/bin` folder.
+
+Otherwise, you will just need java 23 and gradle installed on your machine.
+
+### Server
+
+To start the server, run the following command:
+
+```bash
+gradle runChatUDPServer
+```
+
+> Note: all clients will try to connect to the server through localhost.
+
+### Client
+
+To start a client, run the following command:
+
+```bash
+gradle runChatUDPClient
+```
+
+Commands will be available in the client console.
+Type `help` to get a list of available commands.
+```bash
+```
+
+## Architecture
+
+### Class Diagram
+
+```mermaid
+
+```
+
+We are using one Client and one Server class.
+When the server receive a connection, it create a Session instance to handle the communication with the client.
+We also have a PacketType enum to define the different types of packets that can be sent between the client and the server.
+All the packets are 1024 bytes with the first byte being the packet type.
+
+### Sequence Diagram
+
 ```mermaid
 sequenceDiagram
   participant Client1 as Client1
