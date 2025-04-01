@@ -1,29 +1,32 @@
 package fr.polytech;
 
 public enum PacketType {
-    HELLO(1),
-    BROADCAST(2),
-    PRIVATE(3),
-    ROOM_MESSAGE(4),
+    HELLO,
+    BROADCAST,
+    PRIVATE,
+    ROOM_MESSAGE,
 
     // Server-Only
-    PORT(5),
-    NAME_ALREADY_TAKEN(6),
-    NEW_USER(7),
-    USER_LIST(8),
-    ROOM_LIST(9),
-    ROOM_SWITCH(10),
+    PORT,
+    NAME_ALREADY_TAKEN,
+    NEW_USER,
+    USER_LIST,
+    ROOM_LIST,
+    ROOM_SWITCH,
 
     // Client-Only,
-    HEARTBEAT(11),
-    CREATE_ROOM(12),
-    DELETE_ROOM(13),
-    JOIN_ROOM(14);
+    HEARTBEAT,
+    CREATE_ROOM,
+    DELETE_ROOM,
+    JOIN_ROOM;
 
-    private final int id;
+    private int id;
 
-    PacketType(int id) {
-        this.id = id;
+    static {
+        int i = 0;
+        for (PacketType type : PacketType.values()) {
+            type.id = i++;
+        }
     }
 
     public int getId() {
@@ -31,12 +34,10 @@ public enum PacketType {
     }
 
     public static PacketType fromId(int id) {
-        for (PacketType type : PacketType.values()) {
-            if (type.getId() == id) {
-                return type;
-            }
+        if (id < 0 || id >= PacketType.values().length) {
+            throw new IllegalArgumentException("Unknown packet type: " + id);
         }
 
-        throw new IllegalArgumentException("Unknown packet type: " + id);
+        return PacketType.values()[id];
     }
 }
