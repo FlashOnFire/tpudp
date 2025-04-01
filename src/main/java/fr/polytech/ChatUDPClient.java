@@ -69,7 +69,7 @@ public class ChatUDPClient {
                             port
                     );
 
-                    while (true) {
+                    while (!socket.isClosed()) {
                         socket.send(hbPacket);
                         Thread.sleep(5000);
                     }
@@ -78,16 +78,15 @@ public class ChatUDPClient {
                 }
             });
             heartbeat.setDaemon(true);
-            heartbeat.start();
 
             ArrayList<String> userList = new ArrayList<>();
             ArrayList<String> roomList = new ArrayList<>();
             AtomicReference<String> currentRoom = new AtomicReference<>();
 
-            // Start receiving thread
+            // Create receiving thread
             Thread receivingThread = new Thread(() -> {
                 try {
-                    while (true) {
+                    while (!socket.isClosed()) {
                         byte[] receiveBuffer = new byte[1024];
                         DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
                         socket.receive(receivePacket);
@@ -151,7 +150,6 @@ public class ChatUDPClient {
                                 currentRoom.set(roomName);
                                 break;
                             case ROOM_MESSAGE:
-                                // username then message
                                 int usernameLength = receiveByteBuffer.getInt();
                                 byte[] usernameBytes = new byte[usernameLength];
                                 receiveByteBuffer.get(usernameBytes);
@@ -171,9 +169,12 @@ public class ChatUDPClient {
                 }
             });
             receivingThread.setDaemon(true);
-            receivingThread.start();
 
-            // Send messages
+            // Start threads
+            receivingThread.start();
+            heartbeat.start();
+
+            // Process user input
             while (true) {
                 do {
                     input = scanner.nextLine();
