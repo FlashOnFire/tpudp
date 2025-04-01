@@ -139,7 +139,7 @@ sequenceDiagram
   participant Client2 as Client2
   participant Client3 as Client3
   participant Client4 as Client4
-  participant CentralServer as CentralServer
+  participant CentralServer as Main Socket
   participant Socket1 as Socket1
   participant Socket2 as Socket2
   participant Socket3 as Socket3
