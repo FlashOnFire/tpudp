@@ -34,13 +34,13 @@ public class ChatUDPServer {
                 String name = new String(byteBuffer.array(), byteBuffer.position(), nameLength);
                 if (sessions.containsKey(name)) {
                     System.out.println("Rejecting connection using name " + name + " (already taken)");
-                    DatagramPacket reply = new DatagramPacket(
+                    DatagramPacket usernameTakenPacket = new DatagramPacket(
                             ByteBuffer.allocate(4).putInt(PacketType.NAME_ALREADY_TAKEN.getId()).array(),
                             4,
                             packet.getAddress(),
                             packet.getPort()
                     );
-                    socket.send(reply);
+                    socket.send(usernameTakenPacket);
                     continue;
                 }
                 System.out.println("User " + name + " joined");
@@ -66,21 +66,23 @@ public class ChatUDPServer {
                 );
                 sessions.put(name, session);
 
-                // send new port to client
+                // Send new port to client
                 ByteBuffer portBuffer = ByteBuffer.allocate(8);
                 portBuffer.putInt(PacketType.PORT.getId());
                 portBuffer.putInt(session.getPort());
-                DatagramPacket reply = new DatagramPacket(
+                DatagramPacket portPacket = new DatagramPacket(
                         portBuffer.array(),
                         portBuffer.position(),
                         packet.getAddress(),
                         packet.getPort()
                 );
-                socket.send(reply);
+                socket.send(portPacket);
 
-                // Notify other users
+                // Resend updated user list to everyone
                 ByteBuffer userListBuffer = forgeUserListPacket();
-                sessions.entrySet().stream().filter((entry) -> !entry.getKey().equals(name))
+                sessions.entrySet()
+                        .stream()
+                        .filter((entry) -> !entry.getKey().equals(name))
                         .forEach((entry) -> entry.getValue().send(userListBuffer));
             }
         } catch (IOException e) {
@@ -91,10 +93,7 @@ public class ChatUDPServer {
     private static void broadcast(String message) {
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.BROADCAST.getId());
-
-        byte[] byteMessage = message.getBytes(StandardCharsets.UTF_8);
-        buffer.putInt(byteMessage.length);
-        buffer.put(message.getBytes(StandardCharsets.UTF_8));
+        Utils.putString(buffer, message);
 
         sessions.values()
                 .forEach((session) -> session.send(buffer));
@@ -107,12 +106,8 @@ public class ChatUDPServer {
 
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.PRIVATE.getId());
-        byte[] byteUsername = username.getBytes(StandardCharsets.UTF_8);
-        buffer.putInt(byteUsername.length);
-        buffer.put(byteUsername);
-        byte[] byteMessage = message.getBytes(StandardCharsets.UTF_8);
-        buffer.putInt(byteMessage.length);
-        buffer.put(byteMessage);
+        Utils.putString(buffer, username);
+        Utils.putString(buffer, message);
 
         sessions.get(target).send(buffer);
 
@@ -121,24 +116,20 @@ public class ChatUDPServer {
 
     private static ByteBuffer forgeUserListPacket() {
         String userList = String.join(",", sessions.keySet());
-        byte[] userListBytes = userList.getBytes(StandardCharsets.UTF_8);
 
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.USER_LIST.getId());
-        buffer.putInt(userListBytes.length);
-        buffer.put(userListBytes);
+        Utils.putString(buffer, userList);
 
         return buffer;
     }
 
     private static ByteBuffer forgeRoomListPacket() {
         String roomList = String.join(",", rooms);
-        byte[] roomListBytes = roomList.getBytes(StandardCharsets.UTF_8);
 
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.ROOM_LIST.getId());
-        buffer.putInt(roomListBytes.length);
-        buffer.put(roomListBytes);
+        Utils.putString(buffer, roomList);
 
         return buffer;
     }
@@ -178,13 +169,8 @@ public class ChatUDPServer {
 
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.ROOM_MESSAGE.getId());
-        byte[] byteUsername = username.getBytes(StandardCharsets.UTF_8);
-        buffer.putInt(byteUsername.length);
-        buffer.put(byteUsername);
-
-        byte[] byteMessage = message.getBytes(StandardCharsets.UTF_8);
-        buffer.putInt(byteMessage.length);
-        buffer.put(byteMessage);
+        Utils.putString(buffer, username);
+        Utils.putString(buffer, message);
 
         sessions.entrySet()
                 .stream().filter(entry -> !entry.getKey().equals(username))
@@ -210,9 +196,7 @@ public class ChatUDPServer {
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         buffer.putInt(PacketType.ROOM_SWITCH.getId());
 
-        byte[] byteRoom = room.getBytes(StandardCharsets.UTF_8);
-        buffer.putInt(byteRoom.length);
-        buffer.put(byteRoom);
+        Utils.putString(buffer, room);
 
         return buffer;
     }

@@ -71,21 +71,11 @@ public class Session {
                             firstHeartbeat = true;
                         }
                     } else if (packetType == PacketType.BROADCAST.getId()) {
-                        int messageLength = bb.getInt();
-                        byte[] messageBytes = new byte[messageLength];
-                        bb.get(messageBytes);
-                        String message = new String(messageBytes);
+                        String message = Utils.extractString(bb);
                         broadcastHook.accept(message);
                     } else if (packetType == PacketType.PRIVATE.getId()) {
-                        int recipientLength = bb.getInt();
-                        byte[] recipientBytes = new byte[recipientLength];
-                        bb.get(recipientBytes);
-                        String recipient = new String(recipientBytes);
-
-                        int messageLength = bb.getInt();
-                        byte[] messageBytes = new byte[messageLength];
-                        bb.get(messageBytes);
-                        String message = new String(messageBytes);
+                        String recipient = Utils.extractString(bb);
+                        String message = Utils.extractString(bb);
 
                         if (privateMessageHook.test(recipient, message)) {
                             System.out.println("Message sent to " + recipient);
@@ -93,10 +83,7 @@ public class Session {
                             System.out.println("Failed to send message to " + recipient);
                         }
                     } else if (packetType == PacketType.CREATE_ROOM.getId()) {
-                        int roomNameLength = bb.getInt();
-                        byte[] roomNameBytes = new byte[roomNameLength];
-                        bb.get(roomNameBytes);
-                        String roomName = new String(roomNameBytes);
+                        String roomName = Utils.extractString(bb);
 
                         if (roomCreationHook.test(roomName)) {
                             System.out.println("Room " + roomName + " created");
@@ -104,10 +91,7 @@ public class Session {
                             System.out.println("Failed to create room " + roomName);
                         }
                     } else if (packetType == PacketType.DELETE_ROOM.getId()) {
-                        int roomNameLength = bb.getInt();
-                        byte[] roomNameBytes = new byte[roomNameLength];
-                        bb.get(roomNameBytes);
-                        String roomName = new String(roomNameBytes);
+                        String roomName = Utils.extractString(bb);
 
                         if (roomDeletionHook.test(roomName)) {
                             System.out.println("Room " + roomName + " deleted");
@@ -115,17 +99,10 @@ public class Session {
                             System.out.println("Failed to delete room " + roomName);
                         }
                     } else if (packetType == PacketType.ROOM_MESSAGE.getId()) {
-                        int messageLength = bb.getInt();
-                        byte[] messageBytes = new byte[messageLength];
-                        bb.get(messageBytes);
-                        String message = new String(messageBytes);
+                        String message = Utils.extractString(bb);
                         roomMessageHook.accept(currentRoom, message);
                     } else if (packetType == PacketType.ROOM_SWITCH.getId()) {
-                        int roomNameLength = bb.getInt();
-                        byte[] roomNameBytes = new byte[roomNameLength];
-
-                        bb.get(roomNameBytes);
-                        String roomName = new String(roomNameBytes);
+                        String roomName = Utils.extractString(bb);
                         roomSwitchHook.accept(roomName);
                     } else {
                         System.out.println("Received invalid packet type");

@@ -27,9 +27,8 @@ public class ChatUDPClient {
             // Send hello packet
             ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
             byteBuffer.putInt(PacketType.HELLO.getId());
-            byte[] nameBytes = input.getBytes(StandardCharsets.UTF_8);
-            byteBuffer.putInt(nameBytes.length);
-            byteBuffer.put(nameBytes);
+            Utils.putString(byteBuffer, input);
+
             DatagramPacket packet = new DatagramPacket(
                     byteBuffer.array(),
                     byteBuffer.position(),
@@ -99,30 +98,16 @@ public class ChatUDPClient {
 
                         switch (type) {
                             case BROADCAST:
-                                int messageLength = receiveByteBuffer.getInt();
-                                byte[] messageBytes = new byte[messageLength];
-                                receiveByteBuffer.get(messageBytes);
-                                String message = new String(messageBytes, StandardCharsets.UTF_8);
-                                System.out.println("[Broadcast]: " + message);
+                                System.out.println("[Broadcast]: " + Utils.extractString(receiveByteBuffer));
                                 break;
                             case PRIVATE:
-                                int recipientLength = receiveByteBuffer.getInt();
-                                byte[] recipientBytes = new byte[recipientLength];
-                                receiveByteBuffer.get(recipientBytes);
-                                String recipient = new String(recipientBytes);
-
-                                int privateMessageLength = receiveByteBuffer.getInt();
-                                byte[] privateMessageBytes = new byte[privateMessageLength];
-                                receiveByteBuffer.get(privateMessageBytes);
-                                String privateMessage = new String(privateMessageBytes);
+                                String recipient = Utils.extractString(receiveByteBuffer);
+                                String privateMessage = Utils.extractString(receiveByteBuffer);
 
                                 System.out.println("[" + recipient + " -> You]: " + privateMessage);
                                 break;
                             case USER_LIST:
-                                int userListLength = receiveByteBuffer.getInt();
-                                byte[] userListBytes = new byte[userListLength];
-                                receiveByteBuffer.get(userListBytes);
-                                String userListStr = new String(userListBytes, StandardCharsets.UTF_8);
+                                String userListStr = Utils.extractString(receiveByteBuffer);
 
                                 userList.clear();
                                 userList.addAll(List.of(userListStr.split(",")));
@@ -130,10 +115,7 @@ public class ChatUDPClient {
                                 System.out.println("User list: " + userList);
                                 break;
                             case ROOM_LIST:
-                                int roomListLength = receiveByteBuffer.getInt();
-                                byte[] roomListBytes = new byte[roomListLength];
-                                receiveByteBuffer.get(roomListBytes);
-                                String roomListStr = new String(roomListBytes, StandardCharsets.UTF_8);
+                                String roomListStr = Utils.extractString(receiveByteBuffer);
 
                                 roomList.clear();
                                 roomList.addAll(List.of(roomListStr.split(",")));
@@ -141,23 +123,15 @@ public class ChatUDPClient {
                                 System.out.println("Room list: " + roomList);
                                 break;
                             case ROOM_SWITCH:
-                                int roomNameLength = receiveByteBuffer.getInt();
-                                byte[] roomNameBytes = new byte[roomNameLength];
-                                receiveByteBuffer.get(roomNameBytes);
-                                String roomName = new String(roomNameBytes, StandardCharsets.UTF_8);
+                                String roomName = Utils.extractString(receiveByteBuffer);
 
                                 System.out.println("Joined room: " + roomName);
                                 currentRoom.set(roomName);
                                 break;
                             case ROOM_MESSAGE:
-                                int usernameLength = receiveByteBuffer.getInt();
-                                byte[] usernameBytes = new byte[usernameLength];
-                                receiveByteBuffer.get(usernameBytes);
-                                String username = new String(usernameBytes, StandardCharsets.UTF_8);
-                                int roomMessageLength = receiveByteBuffer.getInt();
-                                byte[] roomMessageBytes = new byte[roomMessageLength];
-                                receiveByteBuffer.get(roomMessageBytes);
-                                String roomMessage = new String(roomMessageBytes, StandardCharsets.UTF_8);
+                                String username = Utils.extractString(receiveByteBuffer);
+                                String roomMessage = Utils.extractString(receiveByteBuffer);
+
                                 System.out.println(currentRoom + " - " + username + " :" + roomMessage);
                                 break;
                             default:
@@ -223,13 +197,8 @@ public class ChatUDPClient {
 
                         byteBuffer = ByteBuffer.allocate(1024);
                         byteBuffer.putInt(PacketType.PRIVATE.getId());
-                        byte[] recipientBytes = recipient.getBytes(StandardCharsets.UTF_8);
-                        byteBuffer.putInt(recipientBytes.length);
-                        byteBuffer.put(recipientBytes);
-
-                        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-                        byteBuffer.putInt(messageBytes.length);
-                        byteBuffer.put(messageBytes);
+                        Utils.putString(byteBuffer, recipient);
+                        Utils.putString(byteBuffer, message);
 
                         packet = new DatagramPacket(
                                 byteBuffer.array(),
@@ -250,9 +219,7 @@ public class ChatUDPClient {
 
                         byteBuffer = ByteBuffer.allocate(1024);
                         byteBuffer.putInt(PacketType.BROADCAST.getId());
-                        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-                        byteBuffer.putInt(messageBytes.length);
-                        byteBuffer.put(messageBytes);
+                        Utils.putString(byteBuffer, message);
 
                         packet = new DatagramPacket(
                                 byteBuffer.array(),
@@ -276,9 +243,7 @@ public class ChatUDPClient {
 
                         byteBuffer = ByteBuffer.allocate(1024);
                         byteBuffer.putInt(PacketType.ROOM_SWITCH.getId());
-                        byte[] roomNameBytes = roomName.getBytes(StandardCharsets.UTF_8);
-                        byteBuffer.putInt(roomNameBytes.length);
-                        byteBuffer.put(roomNameBytes);
+                        Utils.putString(byteBuffer, roomName);
 
                         packet = new DatagramPacket(
                                 byteBuffer.array(),
@@ -302,9 +267,7 @@ public class ChatUDPClient {
 
                         byteBuffer = ByteBuffer.allocate(1024);
                         byteBuffer.putInt(PacketType.CREATE_ROOM.getId());
-                        byte[] roomNameBytes = roomName.getBytes(StandardCharsets.UTF_8);
-                        byteBuffer.putInt(roomNameBytes.length);
-                        byteBuffer.put(roomNameBytes);
+                        Utils.putString(byteBuffer, roomName);
 
                         packet = new DatagramPacket(
                                 byteBuffer.array(),
@@ -328,9 +291,7 @@ public class ChatUDPClient {
 
                         byteBuffer = ByteBuffer.allocate(1024);
                         byteBuffer.putInt(PacketType.DELETE_ROOM.getId());
-                        byte[] roomNameBytes = roomName.getBytes(StandardCharsets.UTF_8);
-                        byteBuffer.putInt(roomNameBytes.length);
-                        byteBuffer.put(roomNameBytes);
+                        Utils.putString(byteBuffer, roomName);
 
                         packet = new DatagramPacket(
                                 byteBuffer.array(),
@@ -351,9 +312,8 @@ public class ChatUDPClient {
 
                     byteBuffer = ByteBuffer.allocate(1024);
                     byteBuffer.putInt(PacketType.ROOM_MESSAGE.getId());
-                    byte[] messageBytes = input.getBytes(StandardCharsets.UTF_8);
-                    byteBuffer.putInt(messageBytes.length);
-                    byteBuffer.put(messageBytes);
+                    Utils.putString(byteBuffer, input);
+
                     packet = new DatagramPacket(
                             byteBuffer.array(),
                             byteBuffer.position(),
