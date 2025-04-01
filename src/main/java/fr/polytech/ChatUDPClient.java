@@ -4,7 +4,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -132,7 +131,7 @@ public class ChatUDPClient {
                                 String username = Utils.extractString(receiveByteBuffer);
                                 String roomMessage = Utils.extractString(receiveByteBuffer);
 
-                                System.out.println(currentRoom + " - " + username + " :" + roomMessage);
+                                System.out.println("<" + username + "> " + roomMessage);
                                 break;
                             default:
                                 System.out.println("Unknown packet type: " + type);
@@ -164,6 +163,7 @@ public class ChatUDPClient {
                         System.out.println("/deleteroom <name> - Delete an existing room");
                         System.out.println("/users             - Display all online users");
                         System.out.println("/rooms             - Display all available rooms");
+                        System.out.println("/currentroom       - Show your current room");
                         System.out.println("/help              - Show this help message");
                         System.out.println("/quit              - Exit the chat application");
                         System.out.println("===================");
@@ -173,6 +173,8 @@ public class ChatUDPClient {
                             System.out.println("- " + user);
                         }
                         System.out.println("=======================");
+                    } else if (input.equals("/currentroom")) {
+                        System.out.println("Current room: " + currentRoom.get());
                     } else if (input.equals("/rooms")) {
                         System.out.println("======= ROOMS =======");
                         for (String user : roomList) {
@@ -183,7 +185,7 @@ public class ChatUDPClient {
                         break;
                     } else if (input.startsWith("/msg")) {
                         String[] parts = input.split(" ", 3);
-                        if (parts.length < 3) {
+                        if (!input.startsWith("/bc ") || parts.length < 3) {
                             System.out.println("Usage: /msg <user> <message>");
                             continue;
                         }
@@ -210,6 +212,11 @@ public class ChatUDPClient {
 
                         System.out.println("[You -> " + recipient + "]: " + message);
                     } else if (input.startsWith("/bc")) {
+                        if (!input.startsWith("/bc ")) {
+                            System.out.println("Usage: /bc <message>");
+                            continue;
+                        }
+
                         String message = input.substring(4);
 
                         if (message.isBlank()) {
@@ -229,6 +236,11 @@ public class ChatUDPClient {
                         );
                         socket.send(packet);
                     } else if (input.startsWith("/room")) {
+                        if (!input.startsWith("/room ")) {
+                            System.out.println("Usage: /room <room_name>");
+                            continue;
+                        }
+
                         String roomName = input.substring(6);
 
                         if (roomName.isBlank()) {
@@ -238,6 +250,11 @@ public class ChatUDPClient {
 
                         if (currentRoom.get().equals(roomName)) {
                             System.out.println("You are already in this room");
+                            continue;
+                        }
+
+                        if (!roomList.contains(roomName)) {
+                            System.out.println("Room does not exist");
                             continue;
                         }
 
@@ -321,7 +338,6 @@ public class ChatUDPClient {
                             port
                     );
                     socket.send(packet);
-                    System.out.println(currentRoom + " - You: " + input);
                 }
             }
         } catch (Exception e) {

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatUDPServer {
     private static final String baseRoom = "general";
-    
+
     private static final List<String> rooms = Collections.synchronizedList(new ArrayList<>());
     private static final ConcurrentHashMap<String, Session> sessions = new ConcurrentHashMap<>();
 
@@ -175,10 +174,10 @@ public class ChatUDPServer {
         Utils.putString(buffer, username);
         Utils.putString(buffer, message);
 
-        sessions.entrySet()
-                .stream().filter(entry -> !entry.getKey().equals(username))
-                .filter(entry -> entry.getValue().getCurrentRoom().equals(room))
-                .forEach((entry) -> entry.getValue().send(buffer));
+        sessions.values()
+                .stream()
+                .filter(s -> s.getCurrentRoom().equals(room))
+                .forEach((s) -> s.send(buffer));
     }
 
     private static void switchRoom(String username, String room) {
@@ -190,9 +189,8 @@ public class ChatUDPServer {
 
         sendRoomMessage("Server", session.getCurrentRoom(), username + " left this room");
         sessions.get(username).setCurrentRoom(room);
-        sendRoomMessage("Server", room, username + " joined this room");
-
         session.send(forgeRoomSwitchPacket(room));
+        sendRoomMessage("Server", room, username + " joined this room");
     }
 
     private static ByteBuffer forgeRoomSwitchPacket(String room) {

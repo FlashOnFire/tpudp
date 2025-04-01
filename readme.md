@@ -50,6 +50,7 @@ Type `/help` to get a list of available commands.
 /deleteroom <name> - Delete an existing room
 /users             - Display all online users
 /rooms             - Display all available rooms
+/currentroom       - Show your current room
 /help              - Show this help message
 /quit              - Exit the chat application
 ===================
