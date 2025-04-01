@@ -6,11 +6,14 @@ import java.net.DatagramSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ChatUDPServer {
     private static final String baseRoom = "general";
-    private static final ArrayList<String> rooms = new ArrayList<>();
+    
+    private static final List<String> rooms = Collections.synchronizedList(new ArrayList<>());
     private static final ConcurrentHashMap<String, Session> sessions = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
