@@ -185,6 +185,7 @@ sequenceDiagram
   rect rgb(250,250,200)
     note left of CentralServer: Client1 sends a broadcast message to all connected clients
     Client1 ->> Socket1: BROADCAST ("Hello, everyone!")
+    Socket1 -->> Client1: BROADCAST ("Hello, everyone!")
     Socket2 -->> Client2: BROADCAST ("Hello, everyone!")
     Socket3 -->> Client3: BROADCAST ("Hello, everyone!")
   end
