@@ -9,10 +9,20 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * UDP Chat Client implementation that handles communication with a chat server.
+ * This client supports features such as:
+ * <ul>
+ *   <li>User authentication with username</li>
+ *   <li>Heartbeat mechanism to maintain connection</li>
+ *   <li>Broadcast and private messaging</li>
+ *   <li>Room management (create, join, delete)</li>
+ *   <li>Command-based interface for interaction</li>
+ * </ul>
+ */
 public class ChatUDPClient {
-
     public static void main(String[] args) {
-
+        // Get username
         System.out.println("Enter your name (max 32chars): ");
         Scanner scanner = new Scanner(System.in);
         String input;
@@ -20,6 +30,7 @@ public class ChatUDPClient {
             input = scanner.nextLine();
         } while (input.isBlank() || input.length() > 32);
 
+        // Create socket
         try (DatagramSocket socket = new DatagramSocket()) {
             System.out.println("Client is running ");
 
@@ -36,7 +47,7 @@ public class ChatUDPClient {
             );
             socket.send(packet);
 
-            // Receive new communication port
+            // Receive new communication port or name already taken packet
             byte[] buffer = new byte[1024];
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
             socket.receive(reply);
@@ -45,13 +56,16 @@ public class ChatUDPClient {
 
             if (packetType == PacketType.NAME_ALREADY_TAKEN.getId()) {
                 System.out.println("Name already taken");
+                // if name already taken, exit
                 return;
             } else if (packetType != PacketType.PORT.getId()) {
                 System.out.println("Invalid packet type");
                 System.out.println("Received: " + packetType);
+                // if packet type is neither PORT nor NAME_ALREADY_TAKEN, exit
                 return;
             }
 
+            // Get new port
             int port = byteBuffer.getInt();
             System.out.println("Received new port: " + port);
 
@@ -77,6 +91,8 @@ public class ChatUDPClient {
             });
             heartbeat.setDaemon(true);
 
+
+            // Create lists for users and rooms
             ArrayList<String> userList = new ArrayList<>();
             ArrayList<String> roomList = new ArrayList<>();
             AtomicReference<String> currentRoom = new AtomicReference<>();
@@ -146,6 +162,7 @@ public class ChatUDPClient {
             // Start threads
             receivingThread.start();
             heartbeat.start();
+
 
             // Process user input
             while (true) {
@@ -321,7 +338,7 @@ public class ChatUDPClient {
                         System.out.println("Unknown command (type /help for help)");
                     }
                 } else {
-                    // room message
+                    // if not a command, send message as is to current room
                     if (currentRoom.get() == null) {
                         System.out.println("You are not in a room");
                         continue;
