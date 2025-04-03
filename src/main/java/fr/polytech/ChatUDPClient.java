@@ -202,7 +202,7 @@ public class ChatUDPClient {
                         break;
                     } else if (input.startsWith("/msg")) {
                         String[] parts = input.split(" ", 3);
-                        if (!input.startsWith("/bc ") || parts.length < 3) {
+                        if (!input.startsWith("/msg ") || parts.length < 3) {
                             System.out.println("Usage: /msg <user> <message>");
                             continue;
                         }
