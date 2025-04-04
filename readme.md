@@ -133,11 +133,11 @@ sequenceDiagram
     rect rgb(230,240,255)
         note left of CentralServer: Clients register with the central server and receive a dedicated socket/port
         Client1 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Alice")
-        CentralServer -->> Client1: PORT (Socket1, port: 5678)
+        CentralServer -->> Client1: PORT (port: 5678)
         Client2 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Bob")
-        CentralServer -->> Client2: PORT (Socket2, port: 6789)
+        CentralServer -->> Client2: PORT (port: 6789)
         Client3 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Charlie")
-        CentralServer -->> Client3: PORT (Socket3, port: 7890)
+        CentralServer -->> Client3: PORT (port: 7890)
         Client4 ->> CentralServer: HELLO (IP: localhost, port: 1234, username: "Alice")
         CentralServer -->> Client4: NAME_ALREADY_TAKEN
     end
