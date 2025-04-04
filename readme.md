@@ -115,9 +115,9 @@ classDiagram
 
 We are using one Client and one Server class.
 When the server receives a connection, it creates a Session instance to handle the communication with the client.
-We also have a PacketType enum to define the different types of packets that can be sent between the client and the
-server.
-All the packets are 1024 bytes, with the first byte being the packet type.
+We also have a PacketType enum to define the different types of packets that can be sent between the client and the server.
+All the packets are 1024 bytes, with the 4 first byte being the packet type.
+Strings are encoded with their length as an int (4 bytes) followed by the string.
 
 ### Sequence Diagram
 
