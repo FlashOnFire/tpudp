@@ -13,6 +13,8 @@ This project demonstrates the usage of UDP sockets in Java through a simple chat
 
 ## Usage
 
+> Note: It is mandatory to run the server before starting any clients.
+
 ### Requirements
 
 If you are using Nix, you can simply `nix build` the project and get executables available in the `result/bin` folder.
