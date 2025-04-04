@@ -180,8 +180,11 @@ sequenceDiagram
     end
 
     rect rgb(220,255,220)
-        note left of CentralServer: Client1 creates a new room
+        note left of CentralServer: Client1 creates a new room and switches to it
         Client1 ->> Socket1: CREATE_ROOM ("Gaming Room")
+        Socket1 -->> Client1: ROOM_SWITCH ("Gaming Room")
+        Socket2 -->> Client2: ROOM_MESSAGE ("Alice has left the room.")
+        Socket3 -->> Client3: ROOM_MESSAGE ("Alice has left the room.")
         Socket1 -->> Client1: ROOM_LIST (["Gaming Room"])
         Socket2 -->> Client2: ROOM_LIST (["Gaming Room"])
         Socket3 -->> Client3: ROOM_LIST (["Gaming Room"])
@@ -191,9 +194,7 @@ sequenceDiagram
         note left of CentralServer: Client2 joins the "Gaming Room"
         Client2 ->> Socket2: JOIN_ROOM ("Gaming Room")
         Socket2 -->> Client2: ROOM_SWITCH ("Gaming Room")
-        Socket1 -->> Client1: ROOM_MESSAGE ("Bob has left the room.")
-        Socket3 -->> Client3: ROOM_MESSAGE ("Bob has left the room.")
-        Socket2 -->> Client2: ROOM_MESSAGE ("Bob has joined the room.")
+        Socket1 -->> Client1: ROOM_MESSAGE ("Bob has joined the room.")
     end
 
     rect rgb(240,230,255)
