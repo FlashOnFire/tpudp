@@ -149,20 +149,20 @@ sequenceDiagram
         Client1 ->> Socket1: HEARTBEAT
         opt First HeartBeat
             Socket1 -->> Client1: USER_LIST
-            Socket1 -->> Client1: ROOM_LIST
+            Socket1 -->> Client1: ROOM_LIST (["General"])
             Socket1 -->> Client1: ROOM_SWITCH ("General")
         end
 
         Client2 ->> Socket2: HEARTBEAT
         opt First HeartBeat
             Socket2 -->> Client2: USER_LIST
-            Socket2 -->> Client2: ROOM_LIST
+            Socket2 -->> Client2: ROOM_LIST (["General"])
             Socket2 -->> Client2: ROOM_SWITCH ("General")
         end
         Client3 ->> Socket3: HEARTBEAT
         opt First HeartBeat
             Socket3 -->> Client3: USER_LIST
-            Socket3 -->> Client3: ROOM_LIST
+            Socket3 -->> Client3: ROOM_LIST (["General"])
             Socket3 -->> Client3: ROOM_SWITCH ("General")
         end
     end
@@ -184,12 +184,16 @@ sequenceDiagram
     rect rgb(220,255,220)
         note left of CentralServer: Client1 creates a new room and switches to it
         Client1 ->> Socket1: CREATE_ROOM ("Gaming Room")
-        Socket1 -->> Client1: ROOM_SWITCH ("Gaming Room")
-        Socket2 -->> Client2: ROOM_MESSAGE ("Alice has left the room.")
-        Socket3 -->> Client3: ROOM_MESSAGE ("Alice has left the room.")
-        Socket1 -->> Client1: ROOM_LIST (["Gaming Room"])
-        Socket2 -->> Client2: ROOM_LIST (["Gaming Room"])
-        Socket3 -->> Client3: ROOM_LIST (["Gaming Room"])
+        alt Room does not exist
+            Socket1 -->> Client1: ROOM_LIST (["General", "Gaming Room"])
+            Socket2 -->> Client2: ROOM_LIST (["General", "Gaming Room"])
+            Socket3 -->> Client3: ROOM_LIST (["General", "Gaming Room"])
+            Socket1 -->> Client1: ROOM_SWITCH ("Gaming Room")
+            Socket2 -->> Client2: ROOM_MESSAGE ("Alice has left the room.")
+            Socket3 -->> Client3: ROOM_MESSAGE ("Alice has left the room.")
+        else Room already exists
+            Socket1 -->> Client1: ROOM_EXISTS
+        end
     end
 
     rect rgb(255,220,220)
@@ -215,8 +219,8 @@ sequenceDiagram
         Socket1 -->> Client1: ROOM_MESSAGE ("The room has been deleted.")
         Socket2 -->> Client2: ROOM_MESSAGE ("The room has been deleted.")
         Socket3 -->> Client3: ROOM_MESSAGE ("The room has been deleted.")
-        Socket1 -->> Client1: ROOM_LIST ([])
-        Socket2 -->> Client2: ROOM_LIST ([])
-        Socket3 -->> Client3: ROOM_LIST ([])
+        Socket1 -->> Client1: ROOM_LIST (["General"])
+        Socket2 -->> Client2: ROOM_LIST (["General"])
+        Socket3 -->> Client3: ROOM_LIST (["General"])
     end
 ```
