@@ -175,35 +175,45 @@ sequenceDiagram
 
     rect rgb(255,215,235)
         note left of CentralServer: Client2 sends a private message to Client3
-        Client2 ->> Socket2: PRIVATE (to "Charlie", "Hey, Charlie!")
-        Socket3 -->> Client3: PRIVATE ("Hey, Charlie!")
+        Client2 ->> Socket2: PRIVATE (from: "Bob", to "Charlie", "Hey, Charlie!")
+        Socket3 -->> Client3: PRIVATE (from: "Bob", "Hey, Charlie!")
     end
 
     rect rgb(220,255,220)
         note left of CentralServer: Client1 creates a new room
-        Client1 ->> CentralServer: CREATE_ROOM ("Gaming Room")
-        CentralServer -->> Client1: ROOM_LIST (["Gaming Room"])
-        CentralServer -->> Client2: ROOM_LIST (["Gaming Room"])
-        CentralServer -->> Client3: ROOM_LIST (["Gaming Room"])
+        Client1 ->> Socket1: CREATE_ROOM ("Gaming Room")
+        Socket1 -->> Client1: ROOM_LIST (["Gaming Room"])
+        Socket2 -->> Client2: ROOM_LIST (["Gaming Room"])
+        Socket3 -->> Client3: ROOM_LIST (["Gaming Room"])
     end
 
     rect rgb(255,220,220)
         note left of CentralServer: Client2 joins the "Gaming Room"
-        Client2 ->> CentralServer: JOIN_ROOM ("Gaming Room")
-        CentralServer -->> Client2: ROOM_SWITCH ("Gaming Room")
+        Client2 ->> Socket2: JOIN_ROOM ("Gaming Room")
+        Socket2 -->> Client2: ROOM_SWITCH ("Gaming Room")
+        Socket1 -->> Client1: ROOM_MESSAGE ("Bob has left the room.")
+        Socket3 -->> Client3: ROOM_MESSAGE ("Bob has left the room.")
+        Socket2 -->> Client2: ROOM_MESSAGE ("Bob has joined the room.")
     end
 
     rect rgb(240,230,255)
         note left of CentralServer: Client3 sends a message in the "Gaming Room"
-        Client3 ->> CentralServer: ROOM_MESSAGE ("Anyone up for a game?")
-        CentralServer -->> Client1: ROOM_MESSAGE ("Anyone up for a game?")
-        CentralServer -->> Client2: ROOM_MESSAGE ("Anyone up for a game?")
+        Client3 ->> Socket3: ROOM_MESSAGE ("Anyone up for a game?")
+        Socket1 -->> Client1: ROOM_MESSAGE ("Anyone up for a game?")
+        Socket2 -->> Client2: ROOM_MESSAGE ("Anyone up for a game?")
     end
 
     rect rgb(200,255,250)
         note left of CentralServer: Client1 deletes the "Gaming Room"
-        Client1 ->> CentralServer: DELETE_ROOM ("Gaming Room")
-        CentralServer -->> Client2: ROOM_LIST ([])
-        CentralServer -->> Client3: ROOM_LIST ([])
+        Client1 ->> Socket1: DELETE_ROOM ("Gaming Room")
+        Socket1 -->> Client1: ROOM_SWITCH ("General")
+        Socket2 -->> Client2: ROOM_SWITCH ("General")
+        Socket3 -->> Client3: ROOM_SWITCH ("General")
+        Socket1 -->> Client1: ROOM_MESSAGE ("The room has been deleted.")
+        Socket2 -->> Client2: ROOM_MESSAGE ("The room has been deleted.")
+        Socket3 -->> Client3: ROOM_MESSAGE ("The room has been deleted.")
+        Socket1 -->> Client1: ROOM_LIST ([])
+        Socket2 -->> Client2: ROOM_LIST ([])
+        Socket3 -->> Client3: ROOM_LIST ([])
     end
 ```
